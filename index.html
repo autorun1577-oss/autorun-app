@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أوتو رن للحسابات - مشروع عبدالله الشربيني</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- html2canvas & jsPDF for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.firebaseAppInit = async function() {
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'autorun-abdullah-elsherbini-v1';
+    const firebaseConfig = {
+    apiKey: "AIzaSyCWSqKvCugWoHVBgGNBf7e-zFrp7an0kmE",
+    authDomain: "autorun0-app.firebaseapp.com",
+    projectId: "autorun0-app",
+    storageBucket: "autorun0-app.firebasestorage.app",
+    messagingSenderId: "801069759021",
+    appId: "1:801069759021:web:04aefbdce95354ee6d96a4",
+    measurementId: "G-YY210KMH3M"
+
+                };
+
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const auth = getAuth(app);
+
+                window.db = db;
+                window.auth = auth;
+                window.appId = appId;
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        window.userId = user.uid;
+                        if (typeof window.initCloudSync === 'function') {
+                            window.initCloudSync();
+                        }
+                    }
+                });
+            } catch (err) {
+                console.log("Firebase fallback to local mode:", err);
+                if (typeof window.initFallbackMode === 'function') {
+                    window.initFallbackMode();
+                }
+            }
+        };
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.firebaseAppInit) window.firebaseAppInit();
+        });
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+        .btn-3d {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn-3d:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+        }
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 25s linear infinite;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="bg-blue-900 text-white py-1.5 px-4 overflow-hidden relative z-50 text-xs font-bold border-b border-blue-800 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-600 text-white px-3 py-0.5 rounded text-[10px] font-black shrink-0 shadow-sm">إعلان النظام</div>
+            <div class="overflow-hidden relative w-[300px] sm:w-[500px] md:w-[700px]">
+                <div id="ticker-text-display" class="animate-ticker text-cyan-200 font-extrabold tracking-wide">
+                    أبو يزن 01001231435 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; أهلاً بكم في برنامج أوتو رن للحسابات - مشروع عبدالله الشربيني
+                </div>
+            </div>
+        </div>
+        <div id="ticker-edit-btn-container">
+            <!-- Admin Edit Button injected dynamically -->
+        </div>
+    </div>
+
+    <div id="app-container" class="min-h-[calc(100vh-33px)] flex flex-col">
+        <!-- Rendered dynamically by JS -->
+    </div>
+
+
+    <div id="balance-alert-modal" class="hidden fixed inset-0 modal-overlay z-[70] flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8 text-center animate-fade-in border border-slate-100">
+            <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-sm"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">تنبيه رصيد منخفض!</h2>
+            <p id="balance-alert-text" class="text-slate-600 mb-8 font-bold text-base leading-relaxed">رصيد أحد الحسابات أقل من أو يساوي 300 جنيه.</p>
+            <button onclick="closeBalanceAlertModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-lg py-4 rounded-2xl transition btn-3d shadow-lg shadow-blue-500/30">موافق</button>
+        </div>
+    </div>
+
+    <div id="ticker-modal" class="hidden fixed inset-0 modal-overlay z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative animate-fade-in border border-slate-100">
+            <button onclick="closeModal('ticker-modal')" class="absolute top-5 left-5 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-times"></i></button>
+            <h2 class="text-2xl font-black text-slate-800 mb-6 text-center"><i class="fa-solid fa-bullhorn text-blue-600 ml-2"></i> تعديل إعلان النظام المتحرك</h2>
+            <form onsubmit="saveTickerText(event)" class="space-y-4">
+                <textarea id="newTickerInput" rows="3" placeholder="أدخل نص الإعلان الجديد المتحرك..." class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-blue-500/20 outline-none text-slate-800" required></textarea>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('ticker-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl transition">إلغاء</button>
+                    <button type="submit" class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition btn-3d">حفظ الإعلان</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="product-modal" class="hidden fixed inset-0 modal-overlay z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative animate-fade-in border border-slate-100">
+            <button onclick="closeModal('product-modal')" class="absolute top-5 left-5 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-times"></i></button>
+            <h2 class="text-2xl font-black text-slate-800 mb-6">إضافة منتج للمخزن</h2>
+            <form id="product-form" onsubmit="saveProduct(event)" class="space-y-4">
+                <input type="text" id="prodName" placeholder="اسم المنتج" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-blue-500/20 outline-none" required>
+                <div class="flex gap-4">
+                    <input type="number" id="prodPrice" placeholder="السعر (ج.م)" class="w-1/2 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-blue-500/20 outline-none" required min="1">
+                    <input type="number" id="prodQty" placeholder="الكمية" class="w-1/2 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-blue-500/20 outline-none" required min="0">
+                </div>
+                <div class="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center hover:bg-slate-50 transition cursor-pointer relative overflow-hidden">
+                    <input type="file" accept="image/*" onchange="handleImageUpload(event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2 relative z-10"></i>
+                    <p class="text-slate-500 font-bold text-sm relative z-10">اضغط لرفع صورة للمنتج (اختياري)</p>
+                    <img id="img-preview" class="hidden absolute inset-0 w-full h-full object-cover z-10 opacity-50">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('product-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl transition">إلغاء</button>
+                    <button type="submit" class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition btn-3d">حفظ المنتج</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="vf-phone-modal" class="hidden fixed inset-0 modal-overlay z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 relative animate-fade-in border border-slate-100">
+            <h2 class="text-2xl font-black text-slate-800 mb-6 text-center"><i class="fa-solid fa-mobile-screen text-red-500 ml-2"></i> رقم فودافون العمل الحالي</h2>
+            <form onsubmit="saveVfPhone(event)" class="space-y-4">
+                <input type="text" id="newVfPhone" placeholder="أدخل رقم الهاتف الجديد" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-red-500/20 outline-none text-center text-xl tracking-widest" required>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('vf-phone-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl transition">إلغاء</button>
+                    <button type="submit" class="flex-[2] bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-2xl transition btn-3d">حفظ الرقم</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="voucher-modal" class="hidden fixed inset-0 modal-overlay z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 relative animate-fade-in border border-slate-100">
+            <h2 class="text-2xl font-black text-slate-800 mb-6 text-center"><i class="fa-solid fa-wifi text-cyan-500 ml-2"></i> إضافة رول كروت</h2>
+            <form id="voucher-form" onsubmit="addInternetVoucher(event)" class="space-y-4">
+                <select id="vName" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-cyan-500/20 outline-none">
+                    <option value="رول فئة 100">رول كروت فئة 100</option>
+                    <option value="رول فئة 150">رول كروت فئة 150</option>
+                </select>
+                <input type="text" id="vPrice" placeholder="سعر البيع للكرت الواحد (مثال: 120)" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-cyan-500/20 outline-none" required>
+                <input type="number" id="vQty" placeholder="العدد الفعلي داخل الرول" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-cyan-500/20 outline-none" required min="1">
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('voucher-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl transition">إلغاء</button>
+                    <button type="submit" class="flex-[2] bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-2xl transition btn-3d">حفظ الرول</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="access-point-modal" class="hidden fixed inset-0 modal-overlay z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative animate-fade-in border border-slate-100">
+            <button onclick="closeModal('access-point-modal')" class="absolute top-5 left-5 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-times"></i></button>
+            <h2 class="text-2xl font-black text-slate-800 mb-6 text-center"><i class="fa-solid fa-network-wired text-sky-600 ml-2"></i> إضافة إكسيس جديد للعميل</h2>
+            <form onsubmit="saveAccessPoint(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">اسم العميل</label>
+                    <input type="text" id="apClientName" placeholder="أدخل اسم العميل" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-sky-500/20 outline-none text-slate-800" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">رقم الموبايل</label>
+                    <input type="text" id="apClientPhone" placeholder="رقم هاتف العميل" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-sky-500/20 outline-none text-slate-800" required dir="ltr">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">عنوان IP الخاص بالإكسيس</label>
+                    <input type="text" id="apIpAddress" placeholder="مثال: 192.168.1.50" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono font-bold focus:ring-4 focus:ring-sky-500/20 outline-none text-slate-800 text-center" required dir="ltr">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">منطقة الربط على برج/موقع الإرسال</label>
+                    <input type="text" id="apTowerArea" placeholder="مثال: برج المشتل - السكتور الشمالي" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-sky-500/20 outline-none text-slate-800" required>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('access-point-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl transition">إلغاء</button>
+                    <button type="submit" class="flex-[2] bg-sky-600 hover:bg-sky-700 text-white font-bold py-4 rounded-2xl transition btn-3d">حفظ الإكسيس</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="employee-modal" class="hidden fixed inset-0 modal-overlay z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg p-8 relative animate-fade-in border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('employee-modal')" class="absolute top-5 left-5 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-times"></i></button>
+            <h2 class="text-2xl font-black text-slate-800 mb-6 text-center"><i class="fa-solid fa-user-plus text-indigo-500 ml-2"></i> إضافة موظف وتحديد الصلاحيات</h2>
+            <form id="employee-form" onsubmit="saveEmployee(event)" class="space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">اسم الموظف</label>
+                        <input type="text" id="empName" placeholder="أدخل اسم الموظف" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-indigo-500/20 outline-none text-center" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">كلمة المرور</label>
+                        <input type="text" id="empPass" placeholder="كلمة المرور" class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-indigo-500/20 outline-none text-center font-mono" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-black text-slate-700 mb-3"><i class="fa-solid fa-shield-halved text-indigo-600 ml-1"></i> صلاحيات الأقسام المسموح للموظف العمل عليها:</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <label class="flex items-center gap-2 cursor-pointer font-bold text-sm bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-400 transition">
+                            <input type="checkbox" name="emp-perm" value="products" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" checked>
+                            <span>المخزن</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-bold text-sm bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-400 transition">
+                            <input type="checkbox" name="emp-perm" value="vodafone" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" checked>
+                            <span>فودافون كاش</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-bold text-sm bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-400 transition">
+                            <input type="checkbox" name="emp-perm" value="fawry" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" checked>
+                            <span>ماكينة فوري</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-bold text-sm bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-400 transition">
+                            <input type="checkbox" name="emp-perm" value="network" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" checked>
+                            <span>شبكة النت</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-bold text-sm bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-400 transition">
+                            <input type="checkbox" name="emp-perm" value="debts" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" checked>
+                            <span>ديون العملاء</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-bold text-sm bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-400 transition">
+                            <input type="checkbox" name="emp-perm" value="reports" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                            <span>التقارير</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeModal('employee-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl transition">إلغاء</button>
+                    <button type="submit" class="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition btn-3d shadow-lg shadow-indigo-500/30">حفظ الموظف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-pass-modal" class="hidden fixed inset-0 modal-overlay z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 relative animate-fade-in border border-slate-100">
+            <h2 class="text-2xl font-black text-slate-800 mb-6 text-center"><i class="fa-solid fa-key text-indigo-600 ml-2"></i> تغيير كلمة مرور المدير</h2>
+            <form onsubmit="saveAdminPassword(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">كلمة المرور الجديدة</label>
+                    <input type="text" id="newAdminPass" placeholder="أدخل الباسورد الجديد" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold focus:ring-4 focus:ring-indigo-500/20 outline-none text-center text-xl font-mono" required>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('admin-pass-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl transition">إلغاء</button>
+                    <button type="submit" class="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition btn-3d">حفظ الباسورد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="balance-modal" class="hidden fixed inset-0 modal-overlay z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 relative animate-fade-in border border-slate-100">
+            <h2 id="balance-modal-title" class="text-2xl font-black text-slate-800 mb-6 text-center">تعديل الرصيد</h2>
+            <form onsubmit="saveBalance(event)" class="space-y-4">
+                <input type="number" id="newBalanceAmount" placeholder="أدخل الرصيد الفعلي" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold outline-none text-center text-xl" required min="0" step="0.5">
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('balance-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-2xl transition">إلغاء</button>
+                    <button type="submit" id="balance-submit-btn" class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition btn-3d">حفظ التعديل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="delete-modal" class="hidden fixed inset-0 modal-overlay z-[60] flex justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center animate-fade-in border border-slate-100">
+            <div class="w-20 h-20 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">هل أنت متأكد؟</h2>
+            <p class="text-slate-500 mb-8 font-bold">عند حذف هذه الحركة سيتم استرجاع الرصيد أو تحديث البيانات للحفاظ على سلامة الحسابات.</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal('delete-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-xl transition">إلغاء</button>
+                <button onclick="confirmDelete()" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-xl transition btn-3d shadow-md shadow-rose-500/30">تأكيد الحذف</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_USERS = [{ id: '1', name: 'admin', password: '123', role: 'admin', permissions: ['products', 'vodafone', 'fawry', 'network', 'debts', 'reports', 'access_points'] }];
+        
+        let users = JSON.parse(localStorage.getItem('autorun_users_v26')) || DEFAULT_USERS;
+        let currentUser = JSON.parse(localStorage.getItem('autorun_current_user_v26')) || null;
+        let activeTab = 'products'; 
+        let deleteTarget = null; 
+        let balanceEditTarget = '';
+        let hasShownSessionAlert = false; 
+
+        let globalTickerText = localStorage.getItem('autorun_ticker_text_v26') || 'أبو يزن 01001231435 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; أهلاً بكم في برنامج أوتو رن للحسابات - مشروع عبدالله الشربيني &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; أبو يزن 01001231435';
+
+        function updateTickerDisplay() {
+            const el = document.getElementById('ticker-text-display');
+            if(el) el.innerHTML = globalTickerText;
+            
+            const btnContainer = document.getElementById('ticker-edit-btn-container');
+            if(btnContainer) {
+                if(currentUser && currentUser.role === 'admin') {
+                    btnContainer.innerHTML = `<button onclick="openTickerEditModal()" class="bg-blue-700 hover:bg-blue-800 text-cyan-200 px-2 py-0.5 rounded text-[10px] font-bold transition shadow-sm flex items-center gap-1 border border-blue-600"><i class="fa-solid fa-pen-to-square"></i> تعديل الإعلان</button>`;
+                } else {
+                    btnContainer.innerHTML = '';
+                }
+            }
+        }
+
+        function openTickerEditModal() {
+            const input = document.getElementById('newTickerInput');
+            if(input) input.value = globalTickerText.replace(/&nbsp;/g, ' ');
+            openModal('ticker-modal');
+        }
+
+        function saveTickerText(e) {
+            e.preventDefault();
+            const val = document.getElementById('newTickerInput').value.trim();
+            if(val) {
+                globalTickerText = val;
+                localStorage.setItem('autorun_ticker_text_v26', globalTickerText);
+                updateTickerDisplay();
+                closeModal('ticker-modal');
+                showToast('تم تحديث إعلان النظام بنجاح!');
+                syncToCloud();
+            }
+        }
+
+        function getTodayString() {
+            const d = new Date();
+            return d.toISOString().split('T')[0];
+        }
+
+        let selectedDate = localStorage.getItem('autorun_selected_date_v26') || getTodayString();
+
+        function getDailyStateKey(date) {
+            return 'autorun_day_state_' + date + '_v26';
+        }
+
+        function getInitialDailyState() {
+            return {
+                products: [],
+                vodafoneBalance: 0,
+                vodafonePhone: 'لم يتم التحديد',
+                vodafoneLogs: [],
+                fawryBalance: 0,
+                fawryLogs: [],
+                internetVouchers: [],
+                internetLogs: [],
+                debts: [],
+                systemLogs: []
+            };
+        }
+
+        let clientAccessPoints = JSON.parse(localStorage.getItem('autorun_access_points_v26')) || [];
+
+        function loadDayState(date) {
+            const raw = localStorage.getItem(getDailyStateKey(date));
+            if (raw) {
+                return JSON.parse(raw);
+            } else {
+                return getInitialDailyState();
+            }
+        }
+
+        let currentDayData = loadDayState(selectedDate);
+
+        function saveState() {
+            localStorage.setItem('autorun_users_v26', JSON.stringify(users));
+            localStorage.setItem('autorun_current_user_v26', JSON.stringify(currentUser));
+            localStorage.setItem('autorun_selected_date_v26', selectedDate);
+            localStorage.setItem(getDailyStateKey(selectedDate), JSON.stringify(currentDayData));
+            localStorage.setItem('autorun_access_points_v26', JSON.stringify(clientAccessPoints));
+            updateTickerDisplay();
+            syncToCloud();
+        }
+
+        // Firebase Cloud Sync integration
+        async function syncToCloud() {
+            if (!window.db || !window.userId) return;
+            try {
+                const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'autorun_main_storage');
+                await window.setDoc(docRef, {
+                    users: users,
+                    tickerText: globalTickerText,
+                    selectedDate: selectedDate,
+                    currentDayData: currentDayData,
+                    clientAccessPoints: clientAccessPoints,
+                    lastUpdated: new Date().toISOString()
+                }, { merge: true });
+            } catch (err) {
+                console.log("Cloud sync save error:", err);
+            }
+        }
+
+        window.initCloudSync = function() {
+            if (!window.db || !window.userId) return;
+            const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'autorun_main_storage');
+            window.onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.users) users = data.users;
+                    if (data.tickerText) { globalTickerText = data.tickerText; localStorage.setItem('autorun_ticker_text_v26', globalTickerText); }
+                    if (data.selectedDate) selectedDate = data.selectedDate;
+                    if (data.currentDayData) currentDayData = data.currentDayData;
+                    if (data.clientAccessPoints) clientAccessPoints = data.clientAccessPoints;
+                    
+                    localStorage.setItem('autorun_users_v26', JSON.stringify(users));
+                    localStorage.setItem('autorun_selected_date_v26', selectedDate);
+                    localStorage.setItem(getDailyStateKey(selectedDate), JSON.stringify(currentDayData));
+                    localStorage.setItem('autorun_access_points_v26', JSON.stringify(clientAccessPoints));
+                    
+                    updateTickerDisplay();
+                    renderApp();
+                }
+            }, (error) => {
+                console.log("Cloud sync listener error:", error);
+            });
+        };
+
+        window.initFallbackMode = function() {
+            console.log("Running in offline local storage mode.");
+        };
+
+        function checkBalanceAlerts() {
+            if (hasShownSessionAlert) return;
+            let msg = '';
+            if (currentDayData.vodafoneBalance <= 300 && currentDayData.fawryBalance <= 300) {
+                msg = `تنبيه هام: رصيد فودافون كاش (${currentDayData.vodafoneBalance} ج.م) ورصيد فوري (${currentDayData.fawryBalance} ج.م) منخفضان جداً (أقل من أو يساوي 300 جنيه)!`;
+            } else if (currentDayData.vodafoneBalance <= 300) {
+                msg = `تنبيه هام: رصيد فودافون كاش منخفض جداً (${currentDayData.vodafoneBalance} ج.م)!`;
+            } else if (currentDayData.fawryBalance <= 300) {
+                msg = `تنبيه هام: رصيد ماكينة فوري منخفض جداً (${currentDayData.fawryBalance} ج.م)!`;
+            }
+
+            if (msg !== '') {
+                document.getElementById('balance-alert-text').textContent = msg;
+                document.getElementById('balance-alert-modal').classList.remove('hidden');
+                hasShownSessionAlert = true;
+            }
+        }
+
+        function closeBalanceAlertModal() {
+            document.getElementById('balance-alert-modal').classList.add('hidden');
+        }
+
+        function changeWorkingDate(newDate) {
+            if(!newDate) return;
+            selectedDate = newDate;
+            currentDayData = loadDayState(selectedDate);
+            hasShownSessionAlert = false;
+            saveState();
+            renderApp();
+            checkBalanceAlerts();
+            showToast(`تم التبديل لتاريخ: ${selectedDate}`);
+        }
+
+        function populateDayFromPrevious() {
+            const keys = Object.keys(localStorage).filter(k => k.startsWith('autorun_day_state_'));
+            keys.sort();
+            if(keys.length > 0) {
+                const lastKey = keys[keys.length - 1];
+                const lastData = JSON.parse(localStorage.getItem(lastKey));
+                currentDayData = {
+                    products: JSON.parse(JSON.stringify(lastData.products || [])),
+                    vodafoneBalance: lastData.vodafoneBalance || 0,
+                    vodafonePhone: lastData.vodafonePhone || 'لم يتم التحديد',
+                    vodafoneLogs: [],
+                    fawryBalance: lastData.fawryBalance || 0,
+                    fawryLogs: [],
+                    internetVouchers: JSON.parse(JSON.stringify(lastData.internetVouchers || [])),
+                    internetLogs: [],
+                    debts: [],
+                    systemLogs: []
+                };
+            } else {
+                currentDayData = getInitialDailyState();
+            }
+            logSystemAction('النظام', 'توليد يوم جديد', `تم تعبئة بيانات وتاريخ ${selectedDate}`);
+            hasShownSessionAlert = false;
+            saveState();
+            renderApp();
+            checkBalanceAlerts();
+            showToast(`تم تعبئة تاريخ ${selectedDate} بنجاح!`);
+        }
+
+        function logSystemAction(section, action, details) {
+            if(!currentDayData.systemLogs) currentDayData.systemLogs = [];
+            currentDayData.systemLogs.push({
+                id: 'sys_' + Date.now(),
+                user: currentUser ? currentUser.name : 'النظام',
+                section: section,
+                action: action,
+                details: details,
+                time: new Date().toLocaleString('ar-EG')
+            });
+            saveState();
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-5 left-5 px-6 py-3 rounded-xl shadow-2xl z-50 text-white font-bold flex items-center gap-3 animate-fade-in ${type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'}`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 4000);
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if(modal) modal.classList.add('hidden');
+        }
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if(modal) {
+                modal.classList.remove('hidden');
+                const firstInput = modal.querySelector('input:not([type="file"]), textarea');
+                if(firstInput) setTimeout(() => firstInput.focus(), 100);
+            }
+        }
+
+        function openBalanceModal(target) {
+            balanceEditTarget = target;
+            const titleEl = document.getElementById('balance-modal-title');
+            const inputEl = document.getElementById('newBalanceAmount');
+            const submitBtn = document.getElementById('balance-submit-btn');
+
+            if(target === 'vodafone') {
+                titleEl.innerHTML = '<i class="fa-solid fa-mobile-screen text-red-500 ml-2"></i> رصيد فودافون كاش';
+                inputEl.value = currentDayData.vodafoneBalance;
+                submitBtn.className = "flex-[2] bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-2xl transition btn-3d";
+            } else {
+                titleEl.innerHTML = '<i class="fa-solid fa-bolt text-orange-500 ml-2"></i> رصيد فوري';
+                inputEl.value = currentDayData.fawryBalance;
+                submitBtn.className = "flex-[2] bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-2xl transition btn-3d";
+            }
+            openModal('balance-modal');
+        }
+
+        function saveBalance(e) {
+            e.preventDefault();
+            const amt = parseFloat(document.getElementById('newBalanceAmount').value) || 0;
+            if (balanceEditTarget === 'vodafone') {
+                logSystemAction('فودافون كاش', 'تعديل الرصيد', `من ${currentDayData.vodafoneBalance} إلى ${amt}`);
+                currentDayData.vodafoneBalance = amt;
+            } else if (balanceEditTarget === 'fawry') {
+                logSystemAction('ماكينة فوري', 'تعديل الرصيد', `من ${currentDayData.fawryBalance} إلى ${amt}`);
+                currentDayData.fawryBalance = amt;
+            }
+            hasShownSessionAlert = false;
+            saveState(); renderApp(); closeModal('balance-modal'); checkBalanceAlerts(); showToast('تم تعديل الرصيد بنجاح');
+        }
+
+        function saveAdminPassword(e) {
+            e.preventDefault();
+            const newPass = document.getElementById('newAdminPass').value.trim();
+            const adminUser = users.find(u => u.role === 'admin');
+            if(adminUser && newPass) {
+                adminUser.password = newPass;
+                logSystemAction('الموظفين', 'تعديل كلمة مرور المدير', 'تم تغيير باسورد المدير بنجاح');
+                saveState();
+                renderApp();
+                closeModal('admin-pass-modal');
+                showToast('تم تغيير كلمة مرور المدير بنجاح');
+            }
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            renderApp();
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const name = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const user = users.find(u => u.name === name && u.password === pass);
+            if (user) {
+                currentUser = user;
+                hasShownSessionAlert = false;
+                logSystemAction('النظام', 'تسجيل دخول', `المستخدم: ${user.name}`);
+                saveState();
+                
+                if(user.role !== 'admin' && user.permissions && user.permissions.length > 0) {
+                    activeTab = user.permissions[0];
+                } else {
+                    activeTab = 'products';
+                }
+
+                renderApp();
+                checkBalanceAlerts();
+                showToast(`مرحباً بك، ${user.name}`);
+            } else {
+                showToast('بيانات الدخول غير صحيحة', 'error');
+            }
+        }
+
+        function logout() {
+            logSystemAction('النظام', 'تسجيل خروج', `المستخدم: ${currentUser ? currentUser.name : ''}`);
+            currentUser = null;
+            saveState();
+            renderApp();
+        }
+
+        function exportToPDF(containerId, fileName) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            showToast('جاري تحضير الملف...', 'success');
+            html2canvas(container, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'JPEG', 0, 10, pdfWidth, pdfHeight);
+                pdf.save(`${fileName}_${selectedDate}.pdf`);
+                logSystemAction('التقارير', 'تصدير PDF', `تقرير: ${fileName} (${selectedDate})`);
+                showToast('تم حفظ الملف بنجاح!');
+            }).catch(() => showToast('حدث خطأ أثناء التصدير', 'error'));
+        }
+
+        function promptDelete(type, id) {
+            deleteTarget = { type, id };
+            openModal('delete-modal');
+        }
+
+        function confirmDelete() {
+            if (!deleteTarget) return;
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) { showToast('غير مصرح لك بالحذف، خاص بالمدير فقط', 'error'); closeModal('delete-modal'); return; }
+
+            if (deleteTarget.type === 'product') {
+                currentDayData.products = currentDayData.products.filter(p => p.id !== deleteTarget.id);
+                logSystemAction('المخزون', 'حذف منتج', 'إزالة منتج من المخزن');
+            } 
+            else if (deleteTarget.type === 'vf_log') {
+                const log = currentDayData.vodafoneLogs.find(l => l.id === deleteTarget.id);
+                if(log) {
+                    if(log.type === 'استلام (إضافة)') currentDayData.vodafoneBalance -= log.amount;
+                    else if(log.type === 'تحويل (خصم)') currentDayData.vodafoneBalance += log.amount;
+                    logSystemAction('فودافون كاش', 'حذف حركة واسترجاع رصيد', `عملية ${log.type} بمبلغ ${log.amount}`);
+                }
+                currentDayData.vodafoneLogs = currentDayData.vodafoneLogs.filter(x => x.id !== deleteTarget.id);
+            } 
+            else if (deleteTarget.type === 'fawry_log') {
+                const log = currentDayData.fawryLogs.find(l => l.id === deleteTarget.id);
+                if(log) {
+                    currentDayData.fawryBalance += log.amount;
+                    logSystemAction('ماكينة فوري', 'حذف حركة واسترجاع رصيد', `مبلغ ${log.amount}`);
+                }
+                currentDayData.fawryLogs = currentDayData.fawryLogs.filter(x => x.id !== deleteTarget.id);
+            } 
+            else if (deleteTarget.type === 'net_voucher') {
+                currentDayData.internetVouchers = currentDayData.internetVouchers.filter(x => x.id !== deleteTarget.id);
+                logSystemAction('شبكة الإنترنت', 'حذف رول كروت', 'إزالة رول');
+            } 
+            else if (deleteTarget.type === 'net_log') {
+                currentDayData.internetLogs = currentDayData.internetLogs.filter(x => x.id !== deleteTarget.id);
+                logSystemAction('شبكة الإنترنت', 'حذف شحن مباشر', 'إزالة عملية شحن');
+            }
+            else if (deleteTarget.type === 'debt_item') {
+                currentDayData.debts = currentDayData.debts.filter(x => x.id !== deleteTarget.id);
+                logSystemAction('ديون العملاء', 'حذف دين', 'إزالة سجل دين عميل');
+            }
+            else if (deleteTarget.type === 'access_point_item') {
+                clientAccessPoints = clientAccessPoints.filter(x => x.id !== deleteTarget.id);
+                logSystemAction('اكسيسات العملاء', 'حذف إكسيس', 'إزالة سجل إكسيس عميل');
+            }
+            else if (deleteTarget.type === 'all_sys_logs') {
+                currentDayData.systemLogs = [];
+            } 
+            else if (deleteTarget.type === 'employee') {
+                if(deleteTarget.id === currentUser.id) { showToast('لا يمكنك حذف حسابك الحالي', 'error'); closeModal('delete-modal'); return; }
+                users = users.filter(u => u.id !== deleteTarget.id);
+                logSystemAction('الموظفين', 'حذف موظف', 'إزالة حساب موظف');
+            }
+            
+            hasShownSessionAlert = false;
+            saveState(); renderApp(); checkBalanceAlerts(); closeModal('delete-modal'); showToast('تم الحذف بنجاح'); deleteTarget = null;
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const preview = document.getElementById('img-preview');
+                    preview.src = evt.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const name = document.getElementById('prodName').value;
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const quantity = parseInt(document.getElementById('prodQty').value);
+            const preview = document.getElementById('img-preview');
+            const imgData = preview.src && preview.src.startsWith('data:') ? preview.src : null;
+
+            currentDayData.products.push({ id: 'prod_' + Date.now(), name, price, quantity, img: imgData });
+            logSystemAction('المخزون', 'إضافة منتج', `إضافة ${quantity} من ${name}`);
+            saveState(); renderApp(); closeModal('product-modal'); showToast('تم إضافة المنتج');
+        }
+
+        function adjustProductQty(id, amt) {
+            const p = currentDayData.products.find(x => x.id === id);
+            if(!p) return;
+            if(p.quantity + amt < 0) { showToast('الكمية لا تكفي للبيع', 'error'); return; }
+            p.quantity += amt;
+            if(amt < 0) {
+                logSystemAction('المخزون', 'بيع', `بيع 1 قطعة: ${p.name} بقيمة ${p.price}`);
+            }
+            saveState(); renderApp(); showToast('تم التحديث');
+        }
+
+        function saveVfPhone(e) {
+            e.preventDefault();
+            const num = document.getElementById('newVfPhone').value.trim();
+            if(num !== '') {
+                currentDayData.vodafonePhone = num;
+                logSystemAction('فودافون كاش', 'تعديل رقم العمل', `الرقم الجديد: ${currentDayData.vodafonePhone}`);
+                saveState(); renderApp(); closeModal('vf-phone-modal'); showToast('تم تحديث رقم العمل');
+            }
+        }
+
+        function handleVodafoneTx(e) {
+            e.preventDefault();
+            const target = document.getElementById('vfTarget').value;
+            const amt = parseFloat(document.getElementById('vfAmount').value);
+            const txType = e.submitter.dataset.type;
+
+            if(txType === 'تحويل (خصم)' && currentDayData.vodafoneBalance < amt) { showToast('الرصيد لا يكفي للتحويل', 'error'); return; }
+
+            if(txType === 'استلام (إضافة)') currentDayData.vodafoneBalance += amt;
+            else currentDayData.vodafoneBalance -= amt;
+
+            currentDayData.vodafoneLogs.push({ id: 'vfl_' + Date.now(), target, amount: amt, type: txType, time: new Date().toLocaleString('ar-EG') });
+            logSystemAction('فودافون كاش', txType, `رقم ${target} بمبلغ ${amt}`);
+            hasShownSessionAlert = false;
+            saveState(); renderApp(); checkBalanceAlerts(); showToast('تمت العملية بنجاح');
+        }
+
+        function quickFawryTx(target, amt) {
+            if(currentDayData.fawryBalance < amt) { showToast('رصيد فوري لا يكفي', 'error'); return; }
+            currentDayData.fawryBalance -= amt;
+            currentDayData.fawryLogs.push({ id: 'fl_' + Date.now(), target, amount: amt, time: new Date().toLocaleString('ar-EG') });
+            logSystemAction('ماكينة فوري', 'دفع سريع', `${target} بمبلغ ${amt}`);
+            hasShownSessionAlert = false;
+            saveState(); renderApp(); checkBalanceAlerts(); showToast(`تم دفع ${target} بنجاح`);
+        }
+
+        function handleFawryTx(e) {
+            e.preventDefault();
+            const target = document.getElementById('fwTarget').value;
+            const amt = parseFloat(document.getElementById('fwAmount').value);
+            
+            if(currentDayData.fawryBalance < amt) { showToast('الرصيد لا يكفي', 'error'); return; }
+            currentDayData.fawryBalance -= amt;
+            currentDayData.fawryLogs.push({ id: 'fl_' + Date.now(), target, amount: amt, time: new Date().toLocaleString('ar-EG') });
+            logSystemAction('ماكينة فوري', 'دفع فاتورة', `${target} بقيمة ${amt}`);
+            hasShownSessionAlert = false;
+            saveState(); renderApp(); checkBalanceAlerts(); showToast('تمت العملية بنجاح');
+        }
+
+        function addInternetVoucher(e) {
+            e.preventDefault();
+            const name = document.getElementById('vName').value;
+            const price = parseFloat(document.getElementById('vPrice').value);
+            const quantity = parseInt(document.getElementById('vQty').value);
+
+            currentDayData.internetVouchers.push({ id: 'nv_' + Date.now(), name, price: price || 0, quantity });
+            logSystemAction('شبكة الإنترنت', 'إضافة رول', `${name} (${quantity} كارت)`);
+            saveState(); renderApp(); closeModal('voucher-modal'); showToast('تم إضافة الرول');
+        }
+
+        function sellVoucher(id) {
+            const v = currentDayData.internetVouchers.find(x => x.id === id);
+            if(v && v.quantity > 0) {
+                v.quantity--;
+                const pVal = parseFloat(v.price) || 0;
+                logSystemAction('شبكة الإنترنت', 'بيع كرت', `بيع كرت ${v.name} بقيمة ${pVal} ج`);
+                saveState(); renderApp(); showToast('تم بيع كرت بنجاح');
+            } else {
+                showToast('هذا الرول فارغ', 'error');
+            }
+        }
+
+        function handleDirectNetCharge(e) {
+            e.preventDefault();
+            const clientName = document.getElementById('netClientName').value;
+            const amount = parseFloat(document.getElementById('netAmount').value);
+            
+            currentDayData.internetLogs.push({ id: 'nl_' + Date.now(), clientName, amount, time: new Date().toLocaleString('ar-EG') });
+            logSystemAction('شبكة الإنترنت', 'شحن مباشر', `للعميل ${clientName} بمبلغ ${amount}`);
+            saveState(); renderApp(); showToast('تم تسجيل الشحن المباشر');
+        }
+
+        function handleAddDebt(e) {
+            e.preventDefault();
+            const clientName = document.getElementById('debtClientName').value.trim();
+            const clientPhone = document.getElementById('debtClientPhone').value.trim();
+            const amount = parseFloat(document.getElementById('debtAmount').value);
+            const repayTime = document.getElementById('debtRepayTime').value.trim();
+            const now = new Date();
+            const currentDate = now.toISOString().split('T')[0];
+            const currentTime = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            if(!currentDayData.debts) currentDayData.debts = [];
+            currentDayData.debts.push({
+                id: 'debt_' + Date.now(),
+                date: currentDate,
+                time: currentTime,
+                name: clientName,
+                phone: clientPhone,
+                amount: amount,
+                repayTime: repayTime
+            });
+
+            logSystemAction('ديون العملاء', 'تسجيل دين جديد', `العميل: ${clientName} - المبلغ: ${amount} ج`);
+            saveState();
+            renderApp();
+            showToast('تم تسجيل الدين بنجاح');
+        }
+
+        function saveAccessPoint(e) {
+            e.preventDefault();
+            const clientName = document.getElementById('apClientName').value.trim();
+            const phone = document.getElementById('apClientPhone').value.trim();
+            const ipAddress = document.getElementById('apIpAddress').value.trim();
+            const towerArea = document.getElementById('apTowerArea').value.trim();
+
+            clientAccessPoints.push({
+                id: 'ap_' + Date.now(),
+                clientName,
+                phone,
+                ipAddress,
+                towerArea,
+                createdAt: new Date().toLocaleString('ar-EG')
+            });
+
+            logSystemAction('اكسيسات العملاء', 'إضافة إكسيس', `العميل: ${clientName} - IP: ${ipAddress}`);
+            saveState();
+            renderApp();
+            closeModal('access-point-modal');
+            showToast('تم حفظ إكسيس العميل بنجاح');
+        }
+
+        function saveEmployee(e) {
+            e.preventDefault();
+            const name = document.getElementById('empName').value.trim();
+            const password = document.getElementById('empPass').value.trim();
+            
+            const permCheckboxes = document.querySelectorAll('input[name="emp-perm"]:checked');
+            const permissions = Array.from(permCheckboxes).map(cb => cb.value);
+
+            if(users.some(u => u.name === name)) { showToast('هذا الاسم موجود بالفعل', 'error'); return; }
+            
+            users.push({ id: 'emp_' + Date.now(), name, password, role: 'worker', permissions });
+            logSystemAction('الموظفين', 'إضافة موظف', `اسم الموظف: ${name}`);
+            saveState(); renderApp(); closeModal('employee-modal'); showToast('تم إضافة الموظف وصلاحياته بنجاح');
+        }
+
+        function hasPermission(tabName) {
+            if (!currentUser) return false;
+            if (currentUser.role === 'admin') return true;
+            if (currentUser.permissions && currentUser.permissions.includes(tabName)) return true;
+            return false;
+        }
+
+        function updateClock() {
+            const clockEl = document.getElementById('live-clock');
+            if(clockEl) {
+                const now = new Date();
+                let hours = now.getHours();
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'م' : 'ص';
+                hours = hours % 12;
+                hours = hours ? hours : 12;
+                const strTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+                clockEl.textContent = strTime;
+            }
+        }
+        setInterval(updateClock, 1000);
+
+        function renderApp() {
+            const container = document.getElementById('app-container');
+            
+            if (!currentUser) {
+                container.innerHTML = `
+                    <div class="flex-1 flex items-center justify-center p-4">
+                        <div class="glass-panel w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border border-white relative overflow-hidden animate-fade-in">
+                            <div class="text-center mb-8">
+                                <div class="w-24 h-24 bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-700 text-white rounded-3xl flex items-center justify-center shadow-lg shadow-cyan-500/30 mx-auto mb-4 btn-3d p-2 border-2 border-cyan-300 overflow-hidden">
+                                    <svg viewBox="0 0 500 500" class="w-full h-full drop-shadow-md">
+                                        <defs>
+                                            <linearGradient id="arLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#00f2fe" />
+                                                <stop offset="50%" stop-color="#2563eb" />
+                                                <stop offset="100%" stop-color="#1e1b4b" />
+                                            </linearGradient>
+                                        </defs>
+                                        <rect width="500" height="500" rx="110" fill="url(#arLogoGrad)" />
+                                        <text x="250" y="325" font-family="'Cairo', sans-serif" font-weight="900" font-size="230" fill="#ffffff" text-anchor="middle" letter-spacing="5">AR</text>
+                                    </svg>
+                                </div>
+                                <h1 class="text-4xl font-black text-slate-900 tracking-wider">AutoRun</h1>
+                                <p class="text-slate-800 font-black text-base mt-1">مشروع عبدالله الشربيني</p>
+                            </div>
+                            <form onsubmit="handleLogin(event)" class="space-y-5">
+                                <div>
+                                    <label class="block text-sm font-black text-slate-900 mb-2">اسم المستخدم</label>
+                                    <input type="text" id="username" class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-300 rounded-2xl font-black text-lg focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 outline-none text-slate-900 placeholder:text-slate-500 placeholder:font-black" required placeholder="أدخل اسم المستخدم">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-black text-slate-900 mb-2">كلمة المرور</label>
+                                    <input type="password" id="password" class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-300 rounded-2xl font-black text-lg focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 outline-none text-slate-900 placeholder:text-slate-500 placeholder:font-black" required placeholder="••••••••">
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-lg py-4 rounded-2xl transition btn-3d shadow-xl shadow-blue-500/30 mt-6 tracking-wide">دخول للنظام</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+                updateTickerDisplay();
+                return;
+            }
+
+            const isAdmin = currentUser.role === 'admin';
+
+            if (!hasPermission(activeTab)) {
+                if (isAdmin) activeTab = 'products';
+                else if (currentUser.permissions && currentUser.permissions.length > 0) activeTab = currentUser.permissions[0];
+            }
+
+            container.innerHTML = `
+                <!-- Navbar -->
+                <header class="glass-panel sticky top-[33px] z-40 px-6 py-4 border-b border-slate-200/60 shadow-sm">
+                    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-700 text-white rounded-2xl flex items-center justify-center shadow-md btn-3d p-1 border border-cyan-300 overflow-hidden">
+                                <svg viewBox="0 0 500 500" class="w-full h-full">
+                                    <rect width="500" height="500" rx="100" fill="#1d4ed8" />
+                                    <text x="250" y="330" font-family="'Cairo', sans-serif" font-weight="900" font-size="240" fill="#ffffff" text-anchor="middle">AR</text>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h1 class="font-black text-xl text-slate-800 tracking-tight">AutoRun</h1>
+                                    <span class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded">مشروع عبدالله الشربيني</span>
+                                </div>
+                                <span class="text-xs font-bold text-slate-500">${isAdmin ? 'حساب الإدارة العليا (مدير)' : `موظف: ${currentUser.name}`}</span>
+                            </div>
+                        </div>
+
+                        <!-- Date Selector, Live Clock & Initializer -->
+                        <div class="flex flex-wrap items-center gap-3 bg-slate-100 px-4 py-2 rounded-2xl border border-slate-200">
+                            <div class="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-sm">
+                                <i class="fa-solid fa-clock"></i>
+                                <span id="live-clock">00:00:00 ص</span>
+                            </div>
+                            <span class="text-xs font-black text-slate-600"><i class="fa-solid fa-calendar-days text-blue-600 ml-1"></i> تاريخ العمل:</span>
+                            <input type="date" id="workDateInput" value="${selectedDate}" onchange="changeWorkingDate(this.value)" class="bg-white font-black text-sm px-3 py-1.5 rounded-xl border border-slate-300 outline-none cursor-pointer">
+                            <button onclick="populateDayFromPrevious()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-xl transition shadow-sm" title="ترحيل أو تعبئة بيانات هذا اليوم من الأمس"><i class="fa-solid fa-rotate"></i> تعبئة وتوليد</button>
+                        </div>
+
+                        <!-- Horizontal Tabs -->
+                        <nav class="flex flex-wrap items-center gap-2">
+                            ${hasPermission('products') ? `<button onclick="switchTab('products')" class="px-4 py-2 rounded-xl font-bold text-sm transition whitespace-nowrap ${activeTab === 'products' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 btn-3d' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}"><i class="fa-solid fa-boxes-stacked ml-1"></i> المخزن</button>` : ''}
+                            ${hasPermission('vodafone') ? `<button onclick="switchTab('vodafone')" class="px-4 py-2 rounded-xl font-bold text-sm transition whitespace-nowrap ${activeTab === 'vodafone' ? 'bg-red-600 text-white shadow-md shadow-red-500/30 btn-3d' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}"><i class="fa-solid fa-mobile-screen ml-1"></i> فودافون كاش</button>` : ''}
+                            ${hasPermission('fawry') ? `<button onclick="switchTab('fawry')" class="px-4 py-2 rounded-xl font-bold text-sm transition whitespace-nowrap ${activeTab === 'fawry' ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30 btn-3d' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}"><i class="fa-solid fa-bolt ml-1"></i> ماكينة فوري</button>` : ''}
+                            ${hasPermission('network') ? `<button onclick="switchTab('network')" class="px-4 py-2 rounded-xl font-bold text-sm transition whitespace-nowrap ${activeTab === 'network' ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/30 btn-3d' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}"><i class="fa-solid fa-wifi ml-1"></i> شبكة النت</button>` : ''}
+                            ${hasPermission('debts') ? `<button onclick="switchTab('debts')" class="px-4 py-2 rounded-xl font-bold text-sm transition whitespace-nowrap ${activeTab === 'debts' ? 'bg-amber-600 text-white shadow-md shadow-amber-500/30 btn-3d' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}"><i class="fa-solid fa-hand-holding-dollar ml-1"></i> ديون العملاء</button>` : ''}
+                            ${isAdmin ? `<button onclick="switchTab('access_points')" class="px-4 py-2 rounded-xl font-bold text-sm transition whitespace-nowrap ${activeTab === 'access_points' ? 'bg-sky-600 text-white shadow-md shadow-sky-500/30 btn-3d' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}"><i class="fa-solid fa-network-wired ml-1"></i> إكسيسات العملاء</button>` : ''}
+                            ${hasPermission('reports') ? `<button onclick="switchTab('reports')" class="px-4 py-2 rounded-xl font-bold text-sm transition whitespace-nowrap ${activeTab === 'reports' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 btn-3d' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}"><i class="fa-solid fa-file-invoice ml-1"></i> التقارير</button>` : ''}
+                            ${isAdmin ? `<button onclick="switchTab('employees')" class="px-4 py-2 rounded-xl font-bold text-sm transition whitespace-nowrap ${activeTab === 'employees' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30 btn-3d' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}"><i class="fa-solid fa-users-gear ml-1"></i> الموظفين</button>` : ''}
+                            <button onclick="logout()" class="px-4 py-2 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 rounded-xl font-bold text-sm transition border border-rose-100 whitespace-nowrap"><i class="fa-solid fa-power-off ml-1"></i> خروج</button>
+                        </nav>
+                    </div>
+                </header>
+
+                <!-- Main Content Area -->
+                <main class="flex-1 max-w-7xl w-full mx-auto p-6 animate-fade-in">
+                    ${renderActiveTabContent(isAdmin)}
+                </main>
+            `;
+            updateClock();
+            updateTickerDisplay();
+            checkBalanceAlerts();
+        }
+
+        let selectedReportEmployee = null;
+
+        function renderActiveTabContent(isAdmin) {
+            if (activeTab === 'products' && hasPermission('products')) {
+                return `
+                    <div class="flex justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800 flex items-center gap-3"><i class="fa-solid fa-boxes-stacked text-blue-600"></i> إدارة المخزون (${selectedDate})</h2>
+                            <p class="text-xs text-slate-500 mt-1 font-bold">السلع والكميات الخاصة بهذا اليوم المحدد</p>
+                        </div>
+                        ${isAdmin ? `<button onclick="openModal('product-modal')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all btn-3d shadow-lg shadow-blue-500/30 flex items-center gap-2"><i class="fa-solid fa-plus"></i> إضافة منتج جديد</button>` : ''}
+                    </div>
+
+                    ${(!currentDayData.products || currentDayData.products.length === 0) ? `
+                        <div class="glass-panel rounded-3xl p-16 text-center shadow-sm border border-slate-200">
+                            <div class="w-24 h-24 bg-slate-100 text-slate-300 rounded-full flex items-center justify-center text-4xl mx-auto mb-4"><i class="fa-solid fa-box-open"></i></div>
+                            <h3 class="text-xl font-bold text-slate-500">المخزن فارغ لهذا اليوم (${selectedDate})</h3>
+                            <p class="text-slate-400 mt-2">اضغط على زر (تعبئة وتوليد) بالأعلى لجلب مخزون الأمس أو أضف منتجات جديدة</p>
+                        </div>
+                    ` : `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            ${currentDayData.products.map(p => `
+                                <div class="glass-panel rounded-3xl overflow-hidden shadow-sm border border-slate-200 transition-all hover:shadow-lg bg-white relative group">
+                                    <div class="h-48 bg-slate-50 relative overflow-hidden flex items-center justify-center">
+                                        ${p.img ? `<img src="${p.img}" class="w-full h-full object-cover" alt="${p.name}">` : `<i class="fa-solid fa-image text-5xl text-slate-300"></i>`}
+                                        <div class="absolute top-3 right-3 bg-white text-slate-800 font-black px-3 py-1 rounded-lg shadow-sm border border-slate-200">${p.quantity} قطعة</div>
+                                    </div>
+                                    <div class="p-5 text-center">
+                                        <h3 class="font-black text-xl text-slate-800 mb-1 line-clamp-1">${p.name}</h3>
+                                        <p class="text-blue-600 font-black text-lg mb-4">${p.price} ج.م</p>
+                                        <div class="flex gap-2 justify-center">
+                                            ${isAdmin ? `<button onclick="promptDelete('product', '${p.id}')" class="bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-500 rounded-xl w-12 flex items-center justify-center transition-colors"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                                            <button onclick="adjustProductQty('${p.id}', -1)" class="flex-1 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 border border-rose-100"><i class="fa-solid fa-cart-arrow-down"></i> بيع (-1)</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                `;
+            } 
+            else if (activeTab === 'vodafone' && hasPermission('vodafone')) {
+                return `
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gradient-to-br from-red-600 to-red-700 rounded-[2rem] p-8 shadow-xl text-white relative overflow-hidden btn-3d lg:col-span-2 flex flex-col sm:flex-row justify-between items-center gap-6">
+                            <div>
+                                <p class="text-red-100 font-bold mb-1">الرصيد الكلي المتاح في المحفظة (${selectedDate})</p>
+                                <h3 class="text-5xl font-black mb-4">${currentDayData.vodafoneBalance} <span class="text-xl">ج.م</span></h3>
+                                <div class="flex gap-2">
+                                    <button onclick="openBalanceModal('vodafone')" class="bg-white text-red-600 font-bold py-2.5 px-5 rounded-xl shadow hover:bg-slate-50 transition btn-3d text-sm">تعديل الرصيد</button>
+                                </div>
+                            </div>
+                            <div class="glass-panel bg-white/10 backdrop-blur-md rounded-2xl p-5 text-center border border-white/20 min-w-[200px]">
+                                <span class="text-xs font-bold text-red-100 block mb-1">رقم العمل الحالي</span>
+                                <h3 class="text-2xl font-black text-white mb-3" dir="ltr">${currentDayData.vodafonePhone}</h3>
+                                ${isAdmin ? `<button onclick="openModal('vf-phone-modal')" class="bg-white/20 hover:bg-white text-white hover:text-red-600 font-bold py-1.5 px-4 rounded-lg text-xs transition border border-white/30">تعديل الرقم</button>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="glass-panel rounded-[2rem] p-6 border border-slate-200 flex flex-col justify-center text-center">
+                            <h4 class="font-bold text-slate-700 mb-2">تعليمات فودافون كاش</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">العمليات والحسابات مسجلة ومؤرشفة لتاريخ اليوم (${selectedDate}) بشكل مستقل لضمان دقة التقارير.</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-200 mb-8">
+                        <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2"><i class="fa-solid fa-bolt text-red-500"></i> حركة جديدة</h3>
+                        <form onsubmit="handleVodafoneTx(event)" class="flex flex-col md:flex-row gap-4">
+                            <input type="text" id="vfTarget" placeholder="رقم هاتف العميل" class="flex-[2] px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-red-500/20 font-bold text-center" required>
+                            <input type="number" id="vfAmount" placeholder="المبلغ" class="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-red-500/20 font-bold text-center" required min="1" step="0.5">
+                            <button type="submit" data-type="تحويل (خصم)" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-2xl transition btn-3d">تحويل (خصم)</button>
+                            <button type="submit" data-type="استلام (إضافة)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl transition btn-3d">استلام (إضافة)</button>
+                        </form>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 border border-slate-200" id="vf-report">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-black text-slate-800"><i class="fa-solid fa-list-ul ml-2 text-slate-400"></i> سجل حركات فودافون (${selectedDate})</h3>
+                            <button onclick="exportToPDF('vf-report', 'سجل_فودافون')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-sm"><i class="fa-solid fa-file-pdf text-red-600 ml-1"></i> تصدير PDF</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm">
+                                <thead class="bg-slate-50 text-slate-500">
+                                    <tr>
+                                        <th class="p-4 font-bold">الرقم</th>
+                                        <th class="p-4 font-bold">العملية</th>
+                                        <th class="p-4 font-bold">المبلغ</th>
+                                        <th class="p-4 font-bold">التاريخ</th>
+                                        ${isAdmin ? `<th class="p-4 text-center">إجراء (مدير)</th>` : `<th></th>`}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(!currentDayData.vodafoneLogs || currentDayData.vodafoneLogs.length === 0) ? `<tr><td colspan="5" class="text-center py-6 text-slate-400 font-bold">لا توجد حركات مسجلة لهذا اليوم</td></tr>` : 
+                                    currentDayData.vodafoneLogs.slice().reverse().map(l => `
+                                        <tr class="border-b border-slate-50">
+                                            <td class="p-4 font-bold text-slate-800" dir="ltr">${l.target}</td>
+                                            <td class="p-4"><span class="px-2.5 py-1 rounded-lg text-xs font-bold ${l.type.includes('استلام')?'bg-emerald-100 text-emerald-700':'bg-red-100 text-red-700'}">${l.type}</span></td>
+                                            <td class="p-4 font-black ${l.type.includes('استلام')?'text-emerald-600':'text-red-600'}">${l.amount} ج</td>
+                                            <td class="p-4 text-slate-500 text-xs">${l.time}</td>
+                                            ${isAdmin ? `<td class="p-4 text-center"><button onclick="promptDelete('vf_log', '${l.id}')" class="text-rose-400 hover:text-rose-600 p-2 bg-rose-50 rounded-xl"><i class="fa-solid fa-trash-can"></i></button></td>` : `<td></td>`}
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (activeTab === 'fawry' && hasPermission('fawry')) {
+                return `
+                    <div class="bg-gradient-to-br from-orange-400 to-orange-500 rounded-[2rem] p-8 shadow-xl text-white mb-8 btn-3d flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-right">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-2 flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-bolt"></i> ماكينة فوري (${selectedDate})</h2>
+                            <p class="text-orange-100 font-bold">الرصيد الكلي المتاح</p>
+                            <h3 class="text-5xl font-black">${currentDayData.fawryBalance} <span class="text-xl">ج.م</span></h3>
+                        </div>
+                        <button onclick="openBalanceModal('fawry')" class="bg-white text-orange-600 font-bold py-3 px-6 rounded-2xl shadow hover:bg-slate-50 transition btn-3d">تعديل الرصيد</button>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-200 mb-8">
+                        <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                            <h3 class="text-xl font-black text-slate-800"><i class="fa-solid fa-file-invoice-dollar text-orange-500 ml-2"></i> الفواتير التي يتم دفعها من رصيدك</h3>
+                            <div class="flex gap-2">
+                                <button onclick="quickFawryTx('كارت كهرباء 97', 97)" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition"><i class="fa-solid fa-bolt text-yellow-600 ml-1"></i> كارت كهرباء 97</button>
+                                <button onclick="quickFawryTx('كارت كهرباء 195', 195)" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition"><i class="fa-solid fa-bolt text-yellow-600 ml-1"></i> كارت كهرباء 195</button>
+                            </div>
+                        </div>
+                        <form onsubmit="handleFawryTx(event)" class="flex flex-col md:flex-row gap-4">
+                            <input type="text" id="fwTarget" placeholder="نوع الشحن" class="flex-[2] px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-orange-500/20 font-bold text-center" required>
+                            <input type="number" id="fwAmount" placeholder="المبلغ المطلوب" class="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-orange-500/20 font-bold text-center" required min="1" step="0.5">
+                            <button type="submit" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl transition btn-3d">تنفيذ (خصم)</button>
+                        </form>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 border border-slate-200" id="fw-report">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-black text-slate-800">سجل عمليات فوري (${selectedDate})</h3>
+                            <button onclick="exportToPDF('fw-report', 'سجل_فوري')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-sm"><i class="fa-solid fa-file-pdf text-orange-500 ml-1"></i> تصدير PDF</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm">
+                                <thead class="bg-slate-50 text-slate-500">
+                                    <tr>
+                                        <th class="p-4 font-bold">نوع الشحن</th>
+                                        <th class="p-4 font-bold">المبلغ المخصوم</th>
+                                        <th class="p-4 font-bold">التاريخ والوقت</th>
+                                        ${isAdmin ? `<th class="p-4 text-center">إجراء (مدير)</th>` : `<th></th>`}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(!currentDayData.fawryLogs || currentDayData.fawryLogs.length === 0) ? `<tr><td colspan="4" class="text-center py-6 text-slate-400 font-bold">لا توجد عمليات مسجلة لهذا اليوم</td></tr>` : 
+                                    currentDayData.fawryLogs.slice().reverse().map(l => `
+                                        <tr class="border-b border-slate-50">
+                                            <td class="p-4 font-bold text-slate-800">${l.target}</td>
+                                            <td class="p-4 font-black text-orange-600">${l.amount} ج</td>
+                                            <td class="p-4 text-slate-500 text-xs">${l.time}</td>
+                                            ${isAdmin ? `<td class="p-4 text-center"><button onclick="promptDelete('fawry_log', '${l.id}')" class="text-rose-400 hover:text-rose-600 p-2 bg-rose-50 rounded-xl"><i class="fa-solid fa-trash-can"></i></button></td>` : `<td></td>`}
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (activeTab === 'network' && hasPermission('network')) {
+                return `
+                    <div class="bg-gradient-to-r from-cyan-500 to-blue-500 rounded-[2rem] p-8 shadow-xl text-white mb-8 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-right btn-3d">
+                        <div>
+                            <h2 class="text-3xl font-black mb-1 flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-wifi"></i> شبكة النت (${selectedDate})</h2>
+                            <p class="text-cyan-100 font-bold">متابعة رولات الكروت وبيعها للعملاء</p>
+                        </div>
+                        <button onclick="openModal('voucher-modal')" class="bg-white text-cyan-600 font-bold py-3 px-6 rounded-xl shadow transition hover:bg-slate-50 btn-3d"><i class="fa-solid fa-plus ml-1"></i> إضافة رول جديد</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        ${(!currentDayData.internetVouchers || currentDayData.internetVouchers.length === 0) ? `<div class="col-span-full glass-panel p-8 text-center rounded-3xl text-slate-500 font-bold border-dashed border-2 border-slate-300">لا توجد رولات كروت مضافة لهذا اليوم. استخدم زر (تعبئة وتوليد) بالأعلى لجلبها.</div>` : 
+                        currentDayData.internetVouchers.map(v => `
+                            <div class="glass-panel rounded-3xl p-6 border border-slate-200">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-xl font-black text-slate-800 mb-1">${v.name}</h3>
+                                        <span class="inline-block bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-sm font-bold border border-slate-200">${v.price} ج للكرت</span>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="block text-3xl font-black ${v.quantity > 10 ? 'text-cyan-600' : 'text-rose-500'}">${v.quantity}</span>
+                                        <span class="text-xs font-bold text-slate-500">متبقي</span>
+                                    </div>
+                                </div>
+                                <div class="mt-6 flex gap-2">
+                                    <button onclick="sellVoucher('${v.id}')" class="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 rounded-xl transition btn-3d shadow">بيع كرت (-1)</button>
+                                    ${isAdmin ? `<button onclick="promptDelete('net_voucher', '${v.id}')" class="w-12 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-500 rounded-xl transition border border-rose-100 flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-200 mb-8">
+                        <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2"><i class="fa-solid fa-user-plus text-blue-500"></i> شحن مباشر للعملاء (بدون كروت)</h3>
+                        <form onsubmit="handleDirectNetCharge(event)" class="flex flex-col md:flex-row gap-4 mb-8">
+                            <input type="text" id="netClientName" placeholder="اسم العميل" class="flex-[2] px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 font-bold text-center" required>
+                            <input type="number" id="netAmount" placeholder="المبلغ (ج.م)" class="flex-1 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 font-bold text-center" required min="1">
+                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition btn-3d">تسجيل الشحن</button>
+                        </form>
+                        
+                        <div id="net-report" class="border-t border-slate-100 pt-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="font-bold text-slate-700">سجل الشحن المباشر للعملاء (${selectedDate})</h4>
+                                <button onclick="exportToPDF('net-report', 'سجل_شحن_النت')" class="text-sm bg-slate-100 px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-200 font-bold"><i class="fa-solid fa-file-pdf text-rose-500 ml-1"></i> تصدير</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right text-sm">
+                                    <thead class="bg-slate-50 text-slate-500">
+                                        <tr>
+                                            <th class="p-3 font-bold">اسم العميل</th>
+                                            <th class="p-3 font-bold">المبلغ</th>
+                                            <th class="p-3 font-bold">الوقت</th>
+                                            ${isAdmin ? `<th class="p-3 text-center">إجراء (مدير)</th>` : `<th></th>`}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${(!currentDayData.internetLogs || currentDayData.internetLogs.length === 0) ? `<tr><td colspan="4" class="text-center py-4 text-slate-500 font-bold">لا توجد عمليات</td></tr>` : 
+                                        currentDayData.internetLogs.slice().reverse().map(l => `
+                                            <tr class="border-b border-slate-50">
+                                                <td class="p-3 font-bold text-slate-800">${l.clientName}</td>
+                                                <td class="p-3 font-black text-blue-600">${l.amount} ج</td>
+                                                <td class="p-3 text-slate-500 text-xs">${l.time}</td>
+                                                ${isAdmin ? `<td class="p-3 text-center"><button onclick="promptDelete('net_log', '${l.id}')" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td>` : `<td></td>`}
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (activeTab === 'debts' && hasPermission('debts')) {
+                return `
+                    <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-[2rem] p-8 shadow-xl text-white mb-8 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-right btn-3d">
+                        <div>
+                            <h2 class="text-3xl font-black mb-1 flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-hand-holding-dollar"></i> ديون العملاء (${selectedDate})</h2>
+                            <p class="text-amber-100 font-bold">تسجيل ديون العملاء مع أوقات السداد والمبالغ بدقة</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-200 mb-8">
+                        <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2"><i class="fa-solid fa-user-pen text-amber-600"></i> تسجيل دين جديد للعميل</h3>
+                        <form onsubmit="handleAddDebt(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <input type="text" id="debtClientName" placeholder="اسم العميل" class="px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 font-bold text-center" required>
+                            <input type="text" id="debtClientPhone" placeholder="رقم الموبايل" class="px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 font-bold text-center" required dir="ltr">
+                            <input type="number" id="debtAmount" placeholder="المبلغ (ج.م)" class="px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 font-bold text-center" required min="1" step="0.5">
+                            <input type="text" id="debtRepayTime" placeholder="وقت/تاريخ السداد (مثال: الخميس القادم)" class="px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-amber-500/20 font-bold text-center" required>
+                            <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 rounded-2xl transition btn-3d">حفظ الدين</button>
+                        </form>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 border border-slate-200" id="debts-report">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-black text-slate-800"><i class="fa-solid fa-list-check ml-2 text-amber-500"></i> جدول ديون العملاء المسجلة</h3>
+                            <button onclick="exportToPDF('debts-report', 'ديون_العملاء')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-sm"><i class="fa-solid fa-file-pdf text-amber-600 ml-1"></i> تصدير PDF</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm">
+                                <thead class="bg-slate-50 text-slate-500">
+                                    <tr>
+                                        <th class="p-4 font-bold">التاريخ والوقت</th>
+                                        <th class="p-4 font-bold">اسم العميل</th>
+                                        <th class="p-4 font-bold">رقم الموبايل</th>
+                                        <th class="p-4 font-bold">المبلغ المستحق</th>
+                                        <th class="p-4 font-bold">وقت السداد المقرر</th>
+                                        ${isAdmin ? `<th class="p-4 text-center">إجراء (مدير)</th>` : `<th></th>`}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(!currentDayData.debts || currentDayData.debts.length === 0) ? `<tr><td colspan="6" class="text-center py-6 text-slate-400 font-bold">لا توجد ديون مسجلة لهذا اليوم</td></tr>` : 
+                                    currentDayData.debts.slice().reverse().map(d => `
+                                        <tr class="border-b border-slate-50">
+                                            <td class="p-4 text-slate-500 text-xs font-bold">${d.date} | ${d.time}</td>
+                                            <td class="p-4 font-black text-slate-800">${d.name}</td>
+                                            <td class="p-4 font-mono font-bold text-slate-600" dir="ltr">${d.phone}</td>
+                                            <td class="p-4 font-black text-amber-600">${d.amount} ج.م</td>
+                                            <td class="p-4 font-bold text-indigo-600">${d.repayTime}</td>
+                                            ${isAdmin ? `<td class="p-4 text-center"><button onclick="promptDelete('debt_item', '${d.id}')" class="text-rose-400 hover:text-rose-600 p-2 bg-rose-50 rounded-xl"><i class="fa-solid fa-trash-can"></i></button></td>` : `<td></td>`}
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (activeTab === 'access_points' && isAdmin) {
+                return `
+                    <div class="bg-gradient-to-r from-sky-600 to-blue-700 rounded-[2rem] p-8 shadow-xl text-white mb-8 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-right btn-3d">
+                        <div>
+                            <h2 class="text-3xl font-black mb-1 flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-network-wired"></i> إكسيسات العملاء (إدارة المدير فقط)</h2>
+                            <p class="text-sky-100 font-bold">إضافة وإدارة عناوين IP وأسماء وأرقام العملاء ومواقع ربطهم بأبراج الإرسال</p>
+                        </div>
+                        <button onclick="openModal('access-point-modal')" class="bg-white text-sky-700 font-bold py-3 px-6 rounded-xl shadow transition hover:bg-slate-50 btn-3d"><i class="fa-solid fa-plus ml-1"></i> إضافة إكسيس جديد</button>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 border border-slate-200" id="ap-report">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-black text-slate-800"><i class="fa-solid fa-server ml-2 text-sky-600"></i> قائمة إكسيسات العملاء المسجلة</h3>
+                            <button onclick="exportToPDF('ap-report', 'اكسيسات_العملاء')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-sm"><i class="fa-solid fa-file-pdf text-sky-600 ml-1"></i> تصدير PDF</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm">
+                                <thead class="bg-slate-50 text-slate-500">
+                                    <tr>
+                                        <th class="p-4 font-bold">اسم العميل</th>
+                                        <th class="p-4 font-bold">رقم الموبايل</th>
+                                        <th class="p-4 font-bold">عنوان IP</th>
+                                        <th class="p-4 font-bold">منطقة الربط على برج الإرسال</th>
+                                        <th class="p-4 font-bold">تاريخ الإضافة</th>
+                                        <th class="p-4 text-center">إجراء (مدير)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(!clientAccessPoints || clientAccessPoints.length === 0) ? `<tr><td colspan="6" class="text-center py-6 text-slate-400 font-bold">لا توجد إكسيسات مسجلة حتى الآن</td></tr>` : 
+                                    clientAccessPoints.slice().reverse().map(ap => `
+                                        <tr class="border-b border-slate-50 hover:bg-slate-50/50">
+                                            <td class="p-4 font-black text-slate-800">${ap.clientName}</td>
+                                            <td class="p-4 font-mono font-bold text-slate-600" dir="ltr">${ap.phone}</td>
+                                            <td class="p-4 font-mono font-black text-sky-600 bg-sky-50/50 rounded" dir="ltr">${ap.ipAddress}</td>
+                                            <td class="p-4 font-bold text-slate-700">${ap.towerArea}</td>
+                                            <td class="p-4 text-xs font-bold text-slate-500">${ap.createdAt}</td>
+                                            <td class="p-4 text-center">
+                                                <button onclick="promptDelete('access_point_item', '${ap.id}')" class="text-rose-400 hover:text-rose-600 p-2 bg-rose-50 rounded-xl transition"><i class="fa-solid fa-trash-can"></i></button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (activeTab === 'reports' && hasPermission('reports')) {
+                const rawLogs = currentDayData.systemLogs || [];
+                const logs = rawLogs.filter(l => l.action !== 'تسجيل دخول' && l.action !== 'تسجيل خروج');
+                
+                const empStats = {};
+                users.forEach(u => {
+                    empStats[u.name] = { 
+                        count: 0, 
+                        operations: [], 
+                        added: 0, 
+                        deducted: 0,
+                        vodafoneCollected: 0,
+                        fawryDeducted: 0,
+                        networkCollected: 0,
+                        warehouseCollected: 0
+                    };
+                });
+
+                logs.forEach(l => {
+                    if (!empStats[l.user]) {
+                        empStats[l.user] = { 
+                            count: 0, 
+                            operations: [], 
+                            added: 0, 
+                            deducted: 0,
+                            vodafoneCollected: 0,
+                            fawryDeducted: 0,
+                            networkCollected: 0,
+                            warehouseCollected: 0
+                        };
+                    }
+                    empStats[l.user].count++;
+                    empStats[l.user].operations.push(l);
+
+                    const details = l.details || '';
+                    const numbers = details.match(/\d+(\.\d+)?/g);
+                    if (numbers && numbers.length > 0) {
+                        const val = parseFloat(numbers[numbers.length - 1]) || 0;
+                        if (l.section === 'المخزون' && l.action === 'بيع') {
+                            // Extract product price or total
+                            const priceMatch = details.match(/بقيمة\s+(\d+(\.\d+)?)/);
+                            const productVal = priceMatch ? parseFloat(priceMatch[1]) : val;
+                            empStats[l.user].warehouseCollected += productVal;
+                            empStats[l.user].added += productVal;
+                        } else if (l.section === 'شبكة الإنترنت' && (l.action === 'بيع كرت' || l.action === 'شحن مباشر')) {
+                            const priceMatch = details.match(/بقيمة\s+(\d+(\.\d+)?)/);
+                            const netVal = priceMatch ? parseFloat(priceMatch[1]) : val;
+                            empStats[l.user].networkCollected += netVal;
+                            empStats[l.user].added += netVal;
+                        } else if (l.section === 'ماكينة فوري') {
+                            empStats[l.user].fawryDeducted += val;
+                            empStats[l.user].deducted += val;
+                        } else if (l.section === 'فودافون كاش') {
+                            if (l.action.includes('استلام')) {
+                                empStats[l.user].vodafoneCollected += val;
+                                empStats[l.user].added += val;
+                            } else {
+                                empStats[l.user].deducted += val;
+                            }
+                        } else {
+                            if (l.action.includes('إضافة') || l.action.includes('استلام')) {
+                                empStats[l.user].added += val;
+                            } else {
+                                empStats[l.user].deducted += val;
+                            }
+                        }
+                    }
+                });
+
+                return `
+                    <div class="flex justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800 flex items-center gap-3"><i class="fa-solid fa-file-invoice text-purple-600"></i> التقارير الشاملة (${selectedDate})</h2>
+                            <p class="text-xs text-slate-500 font-bold mt-1">سجل كامل لكل العمليات وأداء الموظفين وإجمالي المبالغ المحصلة والمخصومة لهذا اليوم</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="exportToPDF('sys-report', 'التقرير_الشامل_${selectedDate}')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-3 rounded-xl text-sm flex items-center gap-2 btn-3d"><i class="fa-solid fa-file-pdf text-purple-400"></i> تصدير PDF</button>
+                            ${isAdmin ? `<button onclick="promptDelete('all_sys_logs', 'all')" class="bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 font-bold px-5 py-3 rounded-xl text-sm flex items-center gap-2 transition border border-rose-200"><i class="fa-solid fa-trash-can"></i> مسح السجل</button>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Employee Performance Summary Cards -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-users-viewfinder text-purple-600"></i> جدول أداء الموظفين وإجمالي المبالغ (اضغط على أي موظف لعرض عملياته التفصيلية)</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${Object.keys(empStats).map(empName => {
+                                const st = empStats[empName];
+                                const isSelected = selectedReportEmployee === empName;
+                                return `
+                                    <div onclick="selectedReportEmployee = '${empName}'; renderApp();" class="glass-panel p-6 rounded-3xl border-2 cursor-pointer transition hover:scale-[1.02] ${isSelected ? 'border-purple-600 bg-purple-50/60 shadow-lg' : 'border-slate-200 hover:border-purple-300'}">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="font-black text-lg text-slate-800"><i class="fa-solid fa-user-tie text-purple-600 ml-1"></i> ${empName}</h4>
+                                            <span class="bg-purple-100 text-purple-700 text-xs font-black px-3 py-1 rounded-xl">${st.count} عملية</span>
+                                        </div>
+                                        <div class="space-y-1.5 text-xs font-bold">
+                                            <div class="flex justify-between bg-white p-2 rounded-xl border border-slate-100"><span class="text-slate-500">إجمالي الإضافات:</span><span class="text-emerald-600 font-black">${st.added} ج</span></div>
+                                            <div class="flex justify-between bg-white p-2 rounded-xl border border-slate-100"><span class="text-slate-500">إجمالي المخصومات/الخصم:</span><span class="text-rose-600 font-black">${st.deducted} ج</span></div>
+                                            <div class="text-[10px] text-slate-500 pt-2 border-t border-slate-100 grid grid-cols-2 gap-1 text-center font-black">
+                                                <div class="bg-blue-50 text-blue-700 p-1 rounded">المخزن: ${st.warehouseCollected} ج</div>
+                                                <div class="bg-orange-50 text-orange-700 p-1 rounded">فوري: ${st.fawryDeducted} ج</div>
+                                                <div class="bg-cyan-50 text-cyan-700 p-1 rounded">نت: ${st.networkCollected} ج</div>
+                                                <div class="bg-red-50 text-red-700 p-1 rounded">فودافون: ${st.vodafoneCollected} ج</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    ${selectedReportEmployee ? `
+                        <div class="glass-panel rounded-[2rem] p-6 border-2 border-purple-200 mb-8 animate-fade-in bg-purple-50/20">
+                            <div class="flex justify-between items-center mb-4">
+                                <div>
+                                    <h3 class="text-xl font-black text-purple-900"><i class="fa-solid fa-clipboard-user ml-2"></i> عمليات الموظف: ${selectedReportEmployee}</h3>
+                                    <p class="text-xs font-bold text-purple-700 mt-1">
+                                        إجمالي العمليات: ${empStats[selectedReportEmployee].count} | 
+                                        المبلغ الإضافي: ${empStats[selectedReportEmployee].added} ج | 
+                                        المبلغ المخصوم: ${empStats[selectedReportEmployee].deducted} ج
+                                    </p>
+                                </div>
+                                <button onclick="selectedReportEmployee = null; renderApp();" class="text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded-xl font-bold">إلغاء التحديد</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right text-sm bg-white rounded-2xl overflow-hidden">
+                                    <thead class="bg-purple-100 text-purple-900">
+                                        <tr>
+                                            <th class="p-3 font-bold">القسم</th>
+                                            <th class="p-3 font-bold">العملية</th>
+                                            <th class="p-3 font-bold">التفاصيل</th>
+                                            <th class="p-3 font-bold">الوقت</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${empStats[selectedReportEmployee].operations.length === 0 ? `<tr><td colspan="4" class="text-center py-4 text-slate-400 font-bold">لا توجد عمليات مسجلة لهذا الموظف اليوم</td></tr>` : 
+                                        empStats[selectedReportEmployee].operations.slice().reverse().map(op => `
+                                            <tr class="border-b border-slate-100">
+                                                <td class="p-3 font-bold">${op.section}</td>
+                                                <td class="p-3 font-bold text-purple-700">${op.action}</td>
+                                                <td class="p-3 font-bold text-slate-800">${op.details}</td>
+                                                <td class="p-3 text-xs text-slate-500">${op.time}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="glass-panel rounded-[2rem] p-6 border border-slate-200" id="sys-report">
+                        <div class="bg-purple-50 rounded-xl p-4 mb-6 border border-purple-100 text-purple-800 font-bold text-sm">
+                            <i class="fa-solid fa-circle-info"></i> هذا السجل يراقب بدقة كل عملية مالية وتجارية تتم في النظام ليوم (${selectedDate}) لحماية الحسابات (مع إخفاء تسجيل الدخول والخروج).
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-sm">
+                                <thead class="bg-slate-100 text-slate-500 border-b border-slate-200">
+                                    <tr>
+                                        <th class="p-4 font-bold">المسؤول</th>
+                                        <th class="p-4 font-bold">القسم</th>
+                                        <th class="p-4 font-bold">العملية</th>
+                                        <th class="p-4 font-bold">التفاصيل</th>
+                                        <th class="p-4 font-bold">التاريخ والوقت</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(!logs || logs.length === 0) ? `<tr><td colspan="5" class="text-center py-8 text-slate-500 font-bold">لا توجد نشاطات مسجلة لهذا اليوم</td></tr>` : 
+                                    logs.slice().reverse().map(l => `
+                                        <tr class="border-b border-slate-50 hover:bg-slate-50/50">
+                                            <td class="p-4 font-black text-slate-700">${l.user}</td>
+                                            <td class="p-4 font-bold text-slate-600"><span class="bg-white border border-slate-200 px-2 py-1 rounded shadow-sm">${l.section}</span></td>
+                                            <td class="p-4 font-bold text-blue-600">${l.action}</td>
+                                            <td class="p-4 font-bold text-slate-800">${l.details}</td>
+                                            <td class="p-4 text-xs font-bold text-slate-500">${l.time}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (activeTab === 'employees' && isAdmin) {
+                return `
+                    <div class="flex justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                        <h2 class="text-2xl font-black text-slate-800 flex items-center gap-3"><i class="fa-solid fa-users-gear text-indigo-600"></i> إدارة الموظفين والصلاحيات</h2>
+                        <div class="flex gap-3">
+                            <button onclick="openModal('admin-pass-modal')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-3 rounded-xl transition btn-3d shadow"><i class="fa-solid fa-key ml-2"></i> تغيير باسورد المدير</button>
+                            <button onclick="openModal('employee-modal')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-xl transition btn-3d shadow"><i class="fa-solid fa-user-plus ml-2"></i> موظف جديد</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${users.map(u => `
+                            <div class="glass-panel rounded-3xl p-6 border ${u.role==='admin' ? 'border-indigo-300 bg-indigo-50/50' : 'border-slate-200'} relative flex flex-col justify-between">
+                                <div>
+                                    ${u.role==='admin' ? `<div class="absolute top-3 left-3 bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-lg">المدير العام</div>` : ''}
+                                    <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-2xl text-indigo-600 mb-4 shadow-sm border border-slate-100"><i class="fa-solid fa-user-tie"></i></div>
+                                    <h3 class="text-xl font-black text-slate-800 mb-1">${u.name}</h3>
+                                    <div class="bg-white border border-slate-200 rounded-xl p-3 mb-4 shadow-inner">
+                                        <span class="text-xs text-slate-500 block mb-0.5">كلمة المرور</span>
+                                        <span class="font-mono font-bold text-slate-700 tracking-wider">${u.password}</span>
+                                    </div>
+                                    
+                                    <div class="mb-5">
+                                        <span class="text-xs font-black text-slate-600 block mb-2">الأقسام المسموح له بالتعامل معها:</span>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            ${u.role === 'admin' ? '<span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-lg">جميع الصلاحيات</span>' : 
+                                              (u.permissions && u.permissions.length > 0 ? u.permissions.map(p => `
+                                                <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-200">
+                                                    ${p === 'products' ? 'المخزن' : p === 'vodafone' ? 'فودافون كاش' : p === 'fawry' ? 'فوري' : p === 'network' ? 'شبكة النت' : p === 'debts' ? 'ديون العملاء' : 'التقارير'}
+                                                </span>
+                                              `).join('') : '<span class="text-rose-500 text-xs font-bold">لا توجد صلاحيات</span>')}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                ${u.role !== 'admin' ? `<button onclick="promptDelete('employee', '${u.id}')" class="w-full bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 font-bold py-2.5 rounded-xl transition border border-rose-100"><i class="fa-solid fa-trash-can ml-1"></i> حذف الموظف</button>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        window.onload = function() {
+            renderApp();
+        };
+    </script>
+</body>
+</html>
